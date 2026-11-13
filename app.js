@@ -1075,38 +1075,40 @@ function renderResult(){
   window.scrollTo(0,0);
 }
 
-// Запуск приложения после проверки авторизации
-if (window.firebaseInitError) {
-  setApp(`
-    <div style="padding: 40px 20px; text-align: center;">
-      <h2 style="color: #ff4b4b; margin-bottom: 16px;">Ошибка подключения</h2>
-      <p style="font-weight: 700; color: #3c3c3c; margin-bottom: 20px;">${esc(window.firebaseInitError)}</p>
-      <button type="button" class="btn primary" onclick="location.reload()">Обновить</button>
-    </div>
-  `);
-} else if (window.firebaseAuth && window.firebaseAuth.onAuthStateChanged) {
-  // Предохранитель: если Firebase молчит 3 секунды, показываем экран входа
-  let authResolved = false;
-  const authTimeout = setTimeout(() => {
-    if (!authResolved) {
-      console.warn('Firebase не отвечает. Принудительный переход на экран входа.');
-      currentView = 'auth';
-      renderAuth();
-    }
-  }, 3000);
+// Запуск приложения
+function startApp() {
+  if (window.firebaseInitError) {
+    setApp(`
+      <div style="padding: 40px 20px; text-align: center;">
+        <h2 style="color: #ff4b4b; margin-bottom: 16px;">Ошибка Firebase</h2>
+        <p style="font-weight: 700; color: #3c3c3c; margin-bottom: 20px;">${esc(window.firebaseInitError)}</p>
+        <button type="button" class="btn primary" onclick="location.reload()">Обновить страницу</button>
+      </div>
+    `);
+    return;
+  }
 
-  window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, (user) => {
-    authResolved = true;
-    clearTimeout(authTimeout);
-    if (user) {
-      currentView = 'home';
-      renderHome();
-    } else {
-      currentView = 'auth';
-      renderAuth();
+  if (window.firebaseAuth && window.firebaseAuth.onAuthStateChanged) {
+    // Пытаемся получить статус авторизации
+    try {
+      window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, (user) => {
+        if (user) {
+          currentView = 'home';
+          renderHome();
+        } else {
+          currentView = 'auth';
+          renderAuth();
+        }
+      });
+    } catch (e) {
+      console.error("Ошибка Firebase Auth:", e);
+      renderAuth(); // Если упало, все равно показываем экран входа
     }
-  });
-} else {
-  // Если Firebase вообще не подключен
-  setApp(`<div style="padding:20px; text-align:center;">Ошибка: Firebase не загружен. Проверьте консоль (F12).</div>`);
+  } else {
+    // Если Firebase не загрузился вообще
+    setApp(`<div style="padding:20px; text-align:center; font-weight:bold; color:red;">Ошибка: Firebase SDK не загружен. Проверьте блокировщик рекламы.</div>`);
+  }
 }
+
+// Даем скриптам Firebase 1.5 секунды на загрузку, затем запускаем
+setTimeout(startApp, 1500);
