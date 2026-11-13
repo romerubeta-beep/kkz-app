@@ -29,18 +29,39 @@ const app = document.getElementById('app');
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
 
-function speak(text){
-  try{
+function speak(text) {
+  if (!text) return;
+  
+  // 1. Идеальный голос от Google Translate (работает без ключей)
+  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=kk&client=tw-ob`;
+  const audio = new Audio(url);
+  
+  // Если Google недоступен — включаем системный голос
+  audio.onerror = function() {
+    fallbackSpeak(text);
+  };
+  
+  // Запускаем
+  audio.play().catch(e => {
+    fallbackSpeak(text); 
+  });
+}
+
+// Резервный синтез (если Google заблокирован)
+function fallbackSpeak(text) {
+  try {
     const u = new SpeechSynthesisUtterance(text);
     const vs = window.speechSynthesis.getVoices() || [];
-    const v = vs.find(x => x.lang.toLowerCase().startsWith('kk'))
+    
+    const v = vs.find(x => x.lang.toLowerCase().includes('kk'))
            || vs.find(x => x.lang.toLowerCase().startsWith('tr'))
            || vs.find(x => x.lang.toLowerCase().startsWith('ru'));
-    if (v){ u.voice = v; u.lang = v.lang; } else { u.lang = 'kk-KZ'; }
+           
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'kk-KZ'; }
     u.rate = 0.85;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
-  }catch(e){}
+  } catch(e) {}
 }
 if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => {};
 
@@ -741,12 +762,18 @@ function renderReading(){
     <div class="lesson-body"><p class="q-prompt">Мәтін · Текст</p>
       <h2 class="text-title">${esc(lesson.title)}</h2>
       <div class="text-hint">Нажми на предложение — перевод</div>
-      <div class="text-card">${lesson.sentences.map(se => `<div class="text-sentence"><div class="ts-kz">${esc(se.kz)}</div><div class="ts-ru">${esc(se.ru)}</div></div>`).join('')}</div>
+      <div class="text-card">${lesson.sentences.map(se => `<div class="text-sentence"><div class="ts-kz">${esc(se.kz)} <button type="button" class="inline-speak" data-text="${esc(se.kz)}">🔊</button></div><div class="ts-ru">${esc(se.ru)}</div></div>`).join('')}</div>
     </div>
     <div class="lesson-bottom"><button type="button" class="btn primary" id="toQuiz">К вопросам →</button></div>
   </div>`);
   document.getElementById('quitBtn').onclick = handleQuit;
   app.querySelectorAll('.text-sentence').forEach(el => { el.onclick = () => el.classList.toggle('revealed'); });
+   app.querySelectorAll('.inline-speak').forEach(btn => {
+    btn.onclick = (e) => { 
+      e.stopPropagation(); // Чтобы при клике на звук не открывался перевод
+      speak(btn.dataset.text); 
+    };
+  });
   document.getElementById('toQuiz').onclick = () => { s.phase='quiz'; s.idx=0; s.selected=null; s.feedback=null; renderLesson(); };
   window.scrollTo(0,0);
 }
