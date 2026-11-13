@@ -353,3 +353,63 @@
   body.dark .translate-phrase-source{color:#e0e0e0}
   body.dark .translate-phrase-target{color:#7ad14f}
   body.dark .translate-phrase-hint{color:#6a7a8a}
+/* ===== АВТОРИЗАЦИЯ ===== */
+.auth-container {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 0 10px;
+}
+.auth-block {
+  background: #fff;
+  border: 2px solid #e5e5e5;
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.auth-block h2 {
+  margin: 0 0 16px;
+  font-size: 20px;
+  text-align: center;
+  color: #3c3c3c;
+}
+.auth-block .search-input {
+  margin-bottom: 12px;
+}
+.auth-block .btn {
+  margin-bottom: 10px;
+}
+.btn-google {
+  background: #fff;
+  color: #3c3c3c;
+  border: 2px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 0 #e5e5e5;
+}
+.btn-google img {
+  width: 20px;
+  height: 20px;
+}
+.auth-divider {
+  text-align: center;
+  color: #a5a5a5;
+  font-weight: 800;
+  margin: 10px 0 20px;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+.auth-error {
+  color: #ff4b4b;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 10px;
+  min-height: 20px;
+}
+
+/* Тёмная тема для авторизации */
+body.dark .auth-block { background: #1a2633; border-color: #2a3a4a; }
+body.dark .auth-block h2 { color: #e0e0e0; }
+body.dark .btn-google { background: #1a2633; color: #e0e0e0; border-color: #2a3a4a; box-shadow: 0 4px 0 #141f2e; }
