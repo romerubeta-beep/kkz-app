@@ -532,9 +532,17 @@ function renderSettings(){
         <div class="si-text"><div class="si-title">🌙 Тёмный режим</div><div class="si-desc">Тёмное оформление интерфейса</div></div>
         <button type="button" class="toggle ${store.darkMode?'on':''}" id="tDark"><span class="toggle-knob"></span></button>
       </div>
+            <div class="settings-item" style="justify-content: center; cursor: pointer;" id="logoutBtn">
+        <div class="si-title" style="color: #ff4b4b;">🚪 Выйти из аккаунта</div>
+      </div>
     </div>`);
   bindMenu();
   document.getElementById('tInt').onclick = () => { store.interleaving = !store.interleaving; save(); renderSettings(); };
+     document.getElementById('logoutBtn').onclick = () => {
+    if (window.firebaseAuth && window.firebaseAuth.signOut) {
+      window.firebaseAuth.signOut(window.firebaseAuth.auth);
+    }
+  };
   document.getElementById('tDark').onclick = () => { store.darkMode = !store.darkMode; document.body.classList.toggle('dark', store.darkMode); save(); renderSettings(); };
   window.scrollTo(0,0);
 }
@@ -578,6 +586,84 @@ function isUnlocked(id){
   const idx = FLAT_INDEX[id];
   if (idx === undefined || idx <= 0) return true;
   return !!store.done[FLAT[idx-1].id];
+}
+
+function renderAuth() {
+  setApp(`
+    <header class="hero" style="padding:30px 0 10px">
+      <h1>Қазақ тілі</h1>
+      <p>Войдите, чтобы сохранять прогресс</p>
+    </header>
+    <div class="auth-container">
+      
+      <!-- БЛОК РЕГИСТРАЦИИ -->
+      <div class="auth-block">
+        <h2>Регистрация</h2>
+        <input type="email" id="regEmail" class="search-input" placeholder="Email">
+        <input type="password" id="regPass" class="search-input" placeholder="Пароль (мин. 6 символов)">
+        <button type="button" class="btn primary" id="btnRegister">Создать аккаунт</button>
+        <button type="button" class="btn btn-google" id="btnRegGoogle">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"> Регистрация через Google
+        </button>
+      </div>
+
+      <div class="auth-divider">или</div>
+
+      <!-- БЛОК ВХОДА -->
+      <div class="auth-block">
+        <h2>Вход</h2>
+        <input type="email" id="logEmail" class="search-input" placeholder="Email">
+        <input type="password" id="logPass" class="search-input" placeholder="Пароль">
+        <button type="button" class="btn primary" id="btnLogin">Войти</button>
+        <button type="button" class="btn btn-google" id="btnLogGoogle">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"> Войти через Google
+        </button>
+      </div>
+
+      <p class="auth-error" id="authError"></p>
+    </div>
+  `);
+
+  if (!window.firebaseAuth) {
+    document.getElementById('authError').textContent = 'Ошибка: Firebase не загружен.';
+    return;
+  }
+
+  const { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, googleProvider, signInWithPopup } = window.firebaseAuth;
+  const errEl = document.getElementById('authError');
+
+  const showError = (error) => {
+    // Переводим популярные ошибки на русский
+    const msg = error.code === 'auth/invalid-credential' ? 'Неверный email или пароль.' :
+                error.code === 'auth/email-already-in-use' ? 'Этот email уже зарегистрирован.' :
+                error.code === 'auth/weak-password' ? 'Пароль слишком короткий (минимум 6 символов).' :
+                error.message;
+    errEl.textContent = msg;
+  };
+
+  // 1. Регистрация через Email
+  document.getElementById('btnRegister').onclick = () => {
+    errEl.textContent = '';
+    const email = document.getElementById('regEmail').value;
+    const pass = document.getElementById('regPass').value;
+    createUserWithEmailAndPassword(auth, email, pass).catch(showError);
+  };
+
+  // 2. Вход через Email
+  document.getElementById('btnLogin').onclick = () => {
+    errEl.textContent = '';
+    const email = document.getElementById('logEmail').value;
+    const pass = document.getElementById('logPass').value;
+    signInWithEmailAndPassword(auth, email, pass).catch(showError);
+  };
+
+  // 3. Вход/Регистрация через Google (одна кнопка делает и то, и другое)
+  const handleGoogle = () => {
+    errEl.textContent = '';
+    signInWithPopup(auth, googleProvider).catch(showError);
+  };
+  document.getElementById('btnRegGoogle').onclick = handleGoogle;
+  document.getElementById('btnLogGoogle').onclick = handleGoogle;
 }
 
 function renderHome(){
@@ -998,4 +1084,20 @@ function renderResult(){
   }, 2400);
 })();
 
-renderHome();
+// Запуск приложения после проверки авторизации
+if (window.firebaseAuth && window.firebaseAuth.onAuthStateChanged) {
+  window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, (user) => {
+    if (user) {
+      // Пользователь авторизован
+      currentView = 'home';
+      renderHome();
+    } else {
+      // Пользователь не авторизован
+      currentView = 'auth';
+      renderAuth();
+    }
+  });
+} else {
+  // Резервный вариант, если Firebase не подключен
+  renderHome();
+}
