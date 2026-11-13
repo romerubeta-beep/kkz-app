@@ -34,15 +34,15 @@
 
 <div id="app"></div>
 
-<!-- Данные и логика -->
+<!-- Данные -->
 <script src="data.js"></script>
 
-<!-- Firebase SDK (Compat версия, работает без type="module") -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
+<!-- Конфигурация Firebase -->
 <script>
-  // ВСТАВЬТЕ ВАШИ РЕАЛЬНЫЕ КЛЮЧИ ИЗ FIREBASE (Project Settings -> General)
   const firebaseConfig = {
     apiKey: "AIzaSyCSGWREy_Byjp226r9omKNjGzQYjJOBVok",
     authDomain: "kkz-app.firebaseapp.com",
@@ -53,18 +53,10 @@
   };
 
   try {
-    if (typeof firebase === 'undefined') {
-      throw new Error("Firebase не загрузился. Возможно, у вас включен блокировщик рекламы (AdBlock).");
-    }
+    if (typeof firebase === 'undefined') throw new Error("Firebase не загрузился.");
+    if (firebaseConfig.apiKey === 'ВАШ_API_KEY') throw new Error("Вы не заменили ключи!");
     
-    // Проверка, что ключи заменены
-    if (firebaseConfig.apiKey === 'ВАШ_API_KEY') {
-      throw new Error("Вы не заменили ключи в firebaseConfig на реальные! Зайдите в консоль Firebase -> Project Settings.");
-    }
-
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
     window.firebaseAuth = {
       auth: firebase.auth(),
@@ -76,12 +68,16 @@
       signInWithPopup: (auth, provider) => auth.signInWithPopup(provider)
     };
   } catch (error) {
-    console.error("Ошибка Firebase:", error);
+    console.error(error);
     window.firebaseInitError = error.message;
   }
 </script>
+
+<!-- Главный скрипт приложения (ОБЯЗАТЕЛЬНО ПОСЛЕДНИМ) -->
+<script src="app.js"></script>
+
+<!-- Убираем заставку принудительно через 2.5 секунды, чтобы не висел белый экран -->
 <script>
-  // Принудительно убираем заставку через 2.5 секунды
   setTimeout(function() {
     const splash = document.getElementById('splash');
     if (splash) {
@@ -90,5 +86,6 @@
     }
   }, 2500);
 </script>
+
 </body>
 </html>
