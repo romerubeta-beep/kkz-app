@@ -1075,15 +1075,6 @@ function renderResult(){
   window.scrollTo(0,0);
 }
 
-(function(){
-  const splash = document.getElementById('splash');
-  if (!splash) return;
-  setTimeout(() => {
-    splash.classList.add('out');
-    setTimeout(() => splash.remove(), 700);
-  }, 2400);
-})();
-
 // Запуск приложения после проверки авторизации
 if (window.firebaseInitError) {
   // Показываем понятную ошибку, если Firebase упал
