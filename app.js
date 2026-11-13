@@ -1077,17 +1077,27 @@ function renderResult(){
 
 // Запуск приложения после проверки авторизации
 if (window.firebaseInitError) {
-  // Показываем понятную ошибку, если Firebase упал
   setApp(`
     <div style="padding: 40px 20px; text-align: center;">
       <h2 style="color: #ff4b4b; margin-bottom: 16px;">Ошибка подключения</h2>
       <p style="font-weight: 700; color: #3c3c3c; margin-bottom: 20px;">${esc(window.firebaseInitError)}</p>
-      <button type="button" class="btn primary" onclick="location.reload()">Попробовать снова</button>
+      <button type="button" class="btn primary" onclick="location.reload()">Обновить</button>
     </div>
   `);
 } else if (window.firebaseAuth && window.firebaseAuth.onAuthStateChanged) {
-  // Если Firebase ок, запускаем проверку авторизации
+  // Предохранитель: если Firebase молчит 3 секунды, показываем экран входа
+  let authResolved = false;
+  const authTimeout = setTimeout(() => {
+    if (!authResolved) {
+      console.warn('Firebase не отвечает. Принудительный переход на экран входа.');
+      currentView = 'auth';
+      renderAuth();
+    }
+  }, 3000);
+
   window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, (user) => {
+    authResolved = true;
+    clearTimeout(authTimeout);
     if (user) {
       currentView = 'home';
       renderHome();
@@ -1097,6 +1107,6 @@ if (window.firebaseInitError) {
     }
   });
 } else {
-  // Резервный вариант
-  renderHome();
+  // Если Firebase вообще не подключен
+  setApp(`<div style="padding:20px; text-align:center;">Ошибка: Firebase не загружен. Проверьте консоль (F12).</div>`);
 }
