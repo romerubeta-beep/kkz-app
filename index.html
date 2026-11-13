@@ -80,5 +80,15 @@
     window.firebaseInitError = error.message;
   }
 </script>
+<script>
+  // Принудительно убираем заставку через 2.5 секунды
+  setTimeout(function() {
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.classList.add('out');
+      setTimeout(() => splash.remove(), 700);
+    }
+  }, 2500);
+</script>
 </body>
 </html>
