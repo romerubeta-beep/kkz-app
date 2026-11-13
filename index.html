@@ -34,7 +34,42 @@
 
 <div id="app"></div>
 
+<!-- Данные и логика -->
 <script src="data.js"></script>
+
+<!-- Firebase SDK (Compat версия, работает без type="module") -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+<script>
+  // ВСТАВЬТЕ СЮДА ВАШ КОНФИГ ИЗ FIREBASE (console.firebase.google.com)
+  const firebaseConfig = {
+    apiKey: "ВАШ_API_KEY",
+    authDomain: "ВАШ_ПРОЕКТ.firebaseapp.com",
+    projectId: "ВАШ_ПРОЕКТ",
+    storageBucket: "ВАШ_ПРОЕКТ.appspot.com",
+    messagingSenderId: "ВАШ_SENDER_ID",
+    appId: "ВАШ_APP_ID"
+  };
+
+  // Инициализация Firebase
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  // Экспортируем функции для использования в app.js
+  window.firebaseAuth = {
+    auth: firebase.auth(),
+    createUserWithEmailAndPassword: (email, pass) => firebase.auth().createUserWithEmailAndPassword(email, pass),
+    signInWithEmailAndPassword: (email, pass) => firebase.auth().signInWithEmailAndPassword(email, pass),
+    signOut: () => firebase.auth().signOut(),
+    onAuthStateChanged: (callback) => firebase.auth().onAuthStateChanged(callback),
+    googleProvider: new firebase.auth.GoogleAuthProvider(),
+    signInWithPopup: (provider) => firebase.auth().signInWithPopup(provider)
+  };
+</script>
+
+<!-- Главный скрипт приложения -->
 <script src="app.js"></script>
 </body>
 </html>
