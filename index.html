@@ -42,35 +42,43 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
 <script>
-  // ВСТАВЬТЕ СЮДА ВАШ КОНФИГ ИЗ FIREBASE (console.firebase.google.com)
+  // ВСТАВЬТЕ ВАШИ РЕАЛЬНЫЕ КЛЮЧИ ИЗ FIREBASE (Project Settings -> General)
   const firebaseConfig = {
-    apiKey : "AIzaSyCSGWREy_Byjp226r9omKNjGzQYjJOBVok" , 
-    authDomain : "kkz-app.firebaseapp.com" , 
-    projectId : "kkz-app" , 
-    storageBucket : "kkz-app.firebasestorage.app" , 
-    messagingSenderId : "149547975851" , 
-    appId : "1:149547975851:web:d0f35a842f50d279fe63ee" , 
-    measurementId : "G-W3H3DGJPQW"
+    apiKey: "AIzaSyCSGWREy_Byjp226r9omKNjGzQYjJOBVok",
+    authDomain: "kkz-app.firebaseapp.com",
+    projectId: "kkz-app",
+    storageBucket: "kkz-app.firebasestorage.app",
+    messagingSenderId: "149547975851",
+    appId: "1:149547975851:web:d0f35a842f50d279fe63ee"
   };
 
-  // Инициализация Firebase
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+  try {
+    if (typeof firebase === 'undefined') {
+      throw new Error("Firebase не загрузился. Возможно, у вас включен блокировщик рекламы (AdBlock).");
+    }
+    
+    // Проверка, что ключи заменены
+    if (firebaseConfig.apiKey === 'ВАШ_API_KEY') {
+      throw new Error("Вы не заменили ключи в firebaseConfig на реальные! Зайдите в консоль Firebase -> Project Settings.");
+    }
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    window.firebaseAuth = {
+      auth: firebase.auth(),
+      createUserWithEmailAndPassword: (auth, email, pass) => auth.createUserWithEmailAndPassword(email, pass),
+      signInWithEmailAndPassword: (auth, email, pass) => auth.signInWithEmailAndPassword(email, pass),
+      signOut: (auth) => auth.signOut(),
+      onAuthStateChanged: (auth, callback) => auth.onAuthStateChanged(callback),
+      googleProvider: new firebase.auth.GoogleAuthProvider(),
+      signInWithPopup: (auth, provider) => auth.signInWithPopup(provider)
+    };
+  } catch (error) {
+    console.error("Ошибка Firebase:", error);
+    window.firebaseInitError = error.message;
   }
-
-  // Экспортируем функции для использования в app.js
-  window.firebaseAuth = {
-    auth: firebase.auth(),
-    createUserWithEmailAndPassword: (email, pass) => firebase.auth().createUserWithEmailAndPassword(email, pass),
-    signInWithEmailAndPassword: (email, pass) => firebase.auth().signInWithEmailAndPassword(email, pass),
-    signOut: () => firebase.auth().signOut(),
-    onAuthStateChanged: (callback) => firebase.auth().onAuthStateChanged(callback),
-    googleProvider: new firebase.auth.GoogleAuthProvider(),
-    signInWithPopup: (provider) => firebase.auth().signInWithPopup(provider)
-  };
 </script>
-
-<!-- Главный скрипт приложения -->
-<script src="app.js"></script>
 </body>
 </html>
