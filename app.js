@@ -1085,19 +1085,27 @@ function renderResult(){
 })();
 
 // Запуск приложения после проверки авторизации
-if (window.firebaseAuth && window.firebaseAuth.onAuthStateChanged) {
+if (window.firebaseInitError) {
+  // Показываем понятную ошибку, если Firebase упал
+  setApp(`
+    <div style="padding: 40px 20px; text-align: center;">
+      <h2 style="color: #ff4b4b; margin-bottom: 16px;">Ошибка подключения</h2>
+      <p style="font-weight: 700; color: #3c3c3c; margin-bottom: 20px;">${esc(window.firebaseInitError)}</p>
+      <button type="button" class="btn primary" onclick="location.reload()">Попробовать снова</button>
+    </div>
+  `);
+} else if (window.firebaseAuth && window.firebaseAuth.onAuthStateChanged) {
+  // Если Firebase ок, запускаем проверку авторизации
   window.firebaseAuth.onAuthStateChanged(window.firebaseAuth.auth, (user) => {
     if (user) {
-      // Пользователь авторизован
       currentView = 'home';
       renderHome();
     } else {
-      // Пользователь не авторизован
       currentView = 'auth';
       renderAuth();
     }
   });
 } else {
-  // Резервный вариант, если Firebase не подключен
+  // Резервный вариант
   renderHome();
 }
