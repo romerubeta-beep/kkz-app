@@ -29,34 +29,51 @@ const app = document.getElementById('app');
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
 
-function speak(text) {
+async function speak(text) {
   if (!text) return;
   
-  // 1. Идеальный голос от Google Translate (работает без ключей)
-  const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=kk&client=tw-ob`;
-  const audio = new Audio(url);
-  
-  // Если Google недоступен — включаем системный голос
-  audio.onerror = function() {
+  try {
+    // Динамически загружаем библиотеку Edge TTS
+    const { Communicate } = await import('https://esm.sh/@twn39/edgetts-js');
+    
+    // Используем казахский нейроголос Aigul (женский)
+    const communicate = new Communicate(text, { 
+      voice: 'kk-KZ-AigulNeural',
+      rate: '+0%',
+      pitch: '+0Hz'
+    });
+    
+    const chunks = [];
+    for await (const chunk of communicate.stream()) {
+      if (chunk.type === 'audio') {
+        chunks.push(chunk.data);
+      }
+    }
+    
+    if (chunks.length === 0) throw new Error('No audio');
+    
+    const blob = new Blob(chunks, { type: 'audio/mpeg' });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    
+    // Очищаем память после проигрывания
+    audio.onended = () => URL.revokeObjectURL(url);
+    audio.onerror = () => URL.revokeObjectURL(url);
+    
+    await audio.play();
+  } catch (e) {
+    console.warn('Edge TTS failed, fallback to system voice', e);
     fallbackSpeak(text);
-  };
-  
-  // Запускаем
-  audio.play().catch(e => {
-    fallbackSpeak(text); 
-  });
+  }
 }
 
-// Резервный синтез (если Google заблокирован)
+// Резервный вариант (если Edge TTS заблокирован)
 function fallbackSpeak(text) {
   try {
     const u = new SpeechSynthesisUtterance(text);
     const vs = window.speechSynthesis.getVoices() || [];
-    
     const v = vs.find(x => x.lang.toLowerCase().includes('kk'))
-           || vs.find(x => x.lang.toLowerCase().startsWith('tr'))
            || vs.find(x => x.lang.toLowerCase().startsWith('ru'));
-           
     if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'kk-KZ'; }
     u.rate = 0.85;
     window.speechSynthesis.cancel();
